@@ -18,6 +18,15 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\engine\class_modules\shaman\sc_shaman.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\engine\class_modules\shaman\sc_shaman.cpp" />
+    <ClCompile Include="..\engine\class_modules\shaman\sc_shaman_elemental.cpp" />
+    <ClCompile Include="..\engine\class_modules\shaman\sc_shaman_enhancement.cpp" />
+    <ClCompile Include="..\engine\class_modules\shaman\sc_shaman_restoration.cpp" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <ProjectGuid>{3347E740-6831-4441-A559-481FD127156F}</ProjectGuid>
@@ -140,8 +149,6 @@
       <Profile>true</Profile>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-  </ItemGroup>
   <Import Project="PrecompiledHeaders.props" />
   <Import Project="CommonIncludeDirectories.props" />
   <Import Project="..\source_files\VS_engine.props" />

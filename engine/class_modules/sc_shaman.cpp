@@ -178,7 +178,6 @@ struct shaman_heal_t;
 struct shaman_totem_pet_t;
 struct totem_pulse_event_t;
 struct totem_pulse_action_t;
-struct stormlash_buff_t;
 
 struct shaman_td_t : public actor_target_data_t
 {
