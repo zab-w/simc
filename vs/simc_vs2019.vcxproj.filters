@@ -471,8 +471,8 @@
     <ClCompile Include="..\engine\class_modules\shaman\sc_shaman_restoration.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\engine\class_modules\shaman\sc_shaman.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="..\engine\class_modules\shaman\sc_shaman_class.hpp">
+      <Filter>Header Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

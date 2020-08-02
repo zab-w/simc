@@ -22,7 +22,7 @@
     <ClInclude Include="..\engine\class_modules\shaman\sc_shaman.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\engine\class_modules\shaman\sc_shaman.cpp" />
+    <ClCompile Include="..\engine\class_modules\shaman\sc_shaman_class.hpp" />
     <ClCompile Include="..\engine\class_modules\shaman\sc_shaman_elemental.cpp" />
     <ClCompile Include="..\engine\class_modules\shaman\sc_shaman_enhancement.cpp" />
     <ClCompile Include="..\engine\class_modules\shaman\sc_shaman_restoration.cpp" />

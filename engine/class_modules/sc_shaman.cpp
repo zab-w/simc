@@ -32,7 +32,7 @@
 
 
 
-namespace
+namespace 
 {  // UNNAMED NAMESPACE
 
 /**
