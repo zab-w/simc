@@ -1,4 +1,5 @@
 #include "simulationcraft.hpp"
+#include "sc_shaman.hpp"
 #include "sc_shaman_class.hpp"
 
 namespace shaman
@@ -295,40 +296,45 @@ enhancement_td_t::enhancement_td_t( player_t* target, enhancement_shaman_t* p ) 
                              ->set_default_value( 1.0 + p->talent.earthen_spike->effectN( 2 ).percent() );
 };
 
-// ==========================================================================
-// Enhancement Action, Attack and Spell declarations
-// ==========================================================================
-//
-template <class Base>
-struct enhancement_action_t : public virtual shaman_action_t<Base>
+template<class Base>
+struct enhancement_attack_t : public shaman_attack_t
 {
-private:
-  using ab = Base;
 
 public:
-  using base_t = enhancement_action_t<Base>;
-
+  bool may_proc_windfury;
+  bool may_proc_flametongue;
+  bool may_proc_hot_hand;
+  bool may_proc_icy_edge;
   bool may_proc_maelstrom_weapon;
   bool may_proc_stormbringer;
   bool may_proc_ability_procs;
   proc_t *proc_mw, *proc_sb;
 
-  enhancement_action_t( const std::string& n, shaman_t* player, const spell_data_t* s = spell_data_t::nil() )
-    : ab( n, player, s ),
+  proc_t *proc_wf, *proc_ft, *proc_fb, *proc_ls, *proc_hh, *proc_pp;
+  
+  enhancement_attack_t( const std::string& token, enhancement_shaman_t* p, const spell_data_t* s )
+    : shaman_attack_t( token, p, s ),
+
+      may_proc_windfury( p->spec.windfury->ok() ),
+      may_proc_flametongue( p->spec.flametongue->ok() ),
+      may_proc_hot_hand( p->talent.hot_hand->ok() ),
+      may_proc_icy_edge( false ),
+      proc_wf( nullptr ),
+      proc_ft( nullptr ),
+      proc_hh( nullptr ),
       may_proc_maelstrom_weapon( false ),  // Change to whitelisting
       may_proc_stormbringer( p->spec.stormbringer->ok() ),
-
       proc_mw( nullptr ),
-      proc_sb( nullptr ),
+      proc_sb( nullptr )
   {
-    if ( ab::data().affected_by( player->spec.enhancement_shaman->effectN( 1 ) ) )
+    if ( ab::data().affected_by( p->spec.enhancement_shaman->effectN( 1 ) ) )
     {
-      ab::base_multiplier *= 1.0 + player->spec.enhancement_shaman->effectN( 1 ).percent();
+      ab::base_multiplier *= 1.0 + p->spec.enhancement_shaman->effectN( 1 ).percent();
     }
 
-    if ( ab::data().affected_by( player->spec.restoration_shaman->effectN( 3 ) ) )
+    if ( ab::data().affected_by( p->spec.restoration_shaman->effectN( 3 ) ) )
     {
-      ab::base_dd_multiplier *= 1.0 + player->spec.restoration_shaman->effectN( 3 ).percent();
+      ab::base_dd_multiplier *= 1.0 + p->spec.restoration_shaman->effectN( 3 ).percent();
     }
   }
 
@@ -340,137 +346,6 @@ public:
   const enhancement_shaman_t* p() const override
   {
     return debug_cast<enhancement_shaman_t*>( ab::player );
-  }
-
-  void init() override
-  {
-    ab::init();
-
-    // Setup Hasted CD for Enhancement
-    if ( ab::data().affected_by( p()->spec.shaman->effectN( 2 ) ) )
-    {
-      ab::cooldown->hasted = true;
-    }
-
-    // Setup Hasted GCD for Enhancement
-    if ( ab::data().affected_by( p()->spec.shaman->effectN( 3 ) ) )
-    {
-      ab::gcd_type = gcd_haste_type::ATTACK_HASTE;
-    }
-
-    if ( may_proc_stormbringer )
-    {
-      may_proc_stormbringer = ab::weapon;
-    }
-  }
-
-  double action_multiplier() const override
-  {
-    double m = ab::action_multiplier();
-
-    // Move to enhancement
-
-     if ( p()->specialization() == SHAMAN_ENHANCEMENT )
-    {
-      if ( ( dbc::is_school( this->school, SCHOOL_FIRE ) || dbc::is_school( this->school, SCHOOL_FROST ) ||
-             dbc::is_school( this->school, SCHOOL_NATURE ) ) &&
-           p()->mastery.enhanced_elements->ok() )
-      {
-        if ( ab::data().affected_by( p()->mastery.enhanced_elements->effectN( 1 ) ) ||
-             ab::data().affected_by( p()->mastery.enhanced_elements->effectN( 5 ) ) || enable_enh_mastery_scaling )
-        {
-          //...hopefully blizzard never makes direct and periodic scaling different from eachother in our mastery..
-          m *= 1.0 + p()->cache.mastery_value();
-        }
-      }
-    }
-
-     if ( affected_by_molten_weapon && p()->buff.molten_weapon->check() )
-    {
-      m *= std::pow( p()->buff.molten_weapon->check_value(), p()->buff.molten_weapon->check() );
-    }
-
-    return m;
-  }
-
-  void ab::init_finished() override
-  {
-    double procchance = p()->spec.stormbringer->proc_chance();
-    if ( may_proc_stormbringer )
-    {
-      proc_sb = player->get_proc( std::string( "Stormbringer: " ) + full_name() );
-    }
-
-    if ( may_proc_stormbringer )
-    {
-      proc_sb = player->get_proc( std::string( "Stormbringer: " ) + full_name() );
-    }
-
-    if ( may_proc_maelstrom_weapon )
-    {
-      proc_mw = player->get_proc( std::string( "Maelstrom Weapon: " ) + full_name() );
-    }
-
-    ab::init_finished();
-  }
-
-  double stormbringer_proc_chance() const
-  {
-    double base_chance = 0;
-
-    base_chance += p()->spec.stormbringer->proc_chance() +
-                   p()->cache.mastery() * p()->mastery.enhanced_elements->effectN( 3 ).mastery_value();
-
-    return base_chance;
-  }
-
-  void trigger_maelstrom_weapon( const action_state_t* source_state, double amount = 0 )
-  {
-    if ( !may_proc_maelstrom_weapon )
-    {
-      return;
-    }
-
-    /*if ( p()->buff.ghost_wolf->check() )
-    {
-      return;
-    }*/
-
-    // needs to roll stacks of MW weapon
-    // proc_mw->occur();
-
-    return;
-  }
-};
-
-struct enhancement_attack_t : public shaman_attack_t, enhancement_action_t<melee_attack_t>
-{
-private:  
-  using shaman_action = shaman_action_t<melee_attack_t>;
-  using enh_action = enhancement_action_t<melee_attack_t>;
-  using ab = shaman_attack_t;
-
-public:
-  bool may_proc_windfury;
-  bool may_proc_flametongue;
-  bool may_proc_hot_hand;
-  bool may_proc_icy_edge;
-
-  proc_t *proc_wf, *proc_ft, *proc_fb, *proc_ls, *proc_hh, *proc_pp;
-  
-  enhancement_attack_t( const std::string& token, enhancement_shaman_t* p, const spell_data_t* s )
-      : ab( token, p, s ),
-      enh_action( token, p, s ),
-      shaman_action(token, p, s),
-      may_proc_windfury( p->spec.windfury->ok() ),
-      may_proc_flametongue( p->spec.flametongue->ok() ),
-      may_proc_hot_hand( p->talent.hot_hand->ok() ),
-      may_proc_icy_edge( false ),
-      proc_wf( nullptr ),
-      proc_ft( nullptr ),
-      proc_hh( nullptr )
-  {
-
   }
 
   void init() override
@@ -493,6 +368,23 @@ public:
     }
 
     may_proc_lightning_shield = ab::weapon != nullptr;
+
+    // Setup Hasted CD for Enhancement
+    if ( ab::data().affected_by( p()->spec.shaman->effectN( 2 ) ) )
+    {
+      ab::cooldown->hasted = true;
+    }
+
+    // Setup Hasted GCD for Enhancement
+    if ( ab::data().affected_by( p()->spec.shaman->effectN( 3 ) ) )
+    {
+      ab::gcd_type = gcd_haste_type::ATTACK_HASTE;
+    }
+
+    if ( may_proc_stormbringer )
+    {
+      may_proc_stormbringer = ab::weapon;
+    }
   }
 
   void init_finished() override
@@ -517,41 +409,254 @@ public:
       proc_wf = player->get_proc( std::string( "Windfury: " ) + full_name() );
     }
 
+    double procchance = p()->spec.stormbringer->proc_chance();
+    if ( may_proc_stormbringer )
+    {
+      proc_sb = player->get_proc( std::string( "Stormbringer: " ) + full_name() );
+    }
+
+    if ( may_proc_stormbringer )
+    {
+      proc_sb = player->get_proc( std::string( "Stormbringer: " ) + full_name() );
+    }
+
+    if ( may_proc_maelstrom_weapon )
+    {
+      proc_mw = player->get_proc( std::string( "Maelstrom Weapon: " ) + full_name() );
+    }
+
     ab::init_finished();
   }
+
+  double action_multiplier() const override
+  {
+    double m = ab::action_multiplier();
+
+    // Move to enhancement
+
+    if ( p()->specialization() == SHAMAN_ENHANCEMENT )
+    {
+      if ( ( dbc::is_school( this->school, SCHOOL_FIRE ) || dbc::is_school( this->school, SCHOOL_FROST ) ||
+             dbc::is_school( this->school, SCHOOL_NATURE ) ) &&
+           p()->mastery.enhanced_elements->ok() )
+      {
+        if ( ab::data().affected_by( p()->mastery.enhanced_elements->effectN( 1 ) ) ||
+             ab::data().affected_by( p()->mastery.enhanced_elements->effectN( 5 ) ) || enable_enh_mastery_scaling )
+        {
+          //...hopefully blizzard never makes direct and periodic scaling different from eachother in our mastery..
+          m *= 1.0 + p()->cache.mastery_value();
+        }
+      }
+    }
+
+    if ( affected_by_molten_weapon && p()->buff.molten_weapon->check() )
+    {
+      m *= std::pow( p()->buff.molten_weapon->check_value(), p()->buff.molten_weapon->check() );
+    }
+
+    return m;
+  }
+
+  void impact( action_state_t* state ) override
+  {
+    base_t::impact( state );
+
+    // Bail out early if the result is a miss/dodge/parry/ms
+    if ( !result_is_hit( state->result ) )
+      return;
+
+    p()->trigger_windfury_weapon( state );
+    p()->trigger_flametongue_weapon( state );
+    p()->trigger_lightning_shield( state );
+    p()->trigger_hot_hand( state );
+    p()->trigger_icy_edge( state );
+  }
+
+  double stormbringer_proc_chance() const
+  {
+    double base_chance = 0;
+
+    base_chance += p()->spec.stormbringer->proc_chance() +
+                   p()->cache.mastery() * p()->mastery.enhanced_elements->effectN( 3 ).mastery_value();
+
+    return base_chance;
+  }
+
+  void trigger_maelstrom_weapon( const action_state_t* source_state, double amount = 0 )
+  {
+    if ( !may_proc_maelstrom_weapon )
+    {
+      return;
+    }
+
+
+
+    return;
+  }
+
+    // need to roll MW gain proc and add stack
+  // virtual double maelstrom_weapon_energize_amount( const action_state_t* /* source */ ) const
+  //{
+  //  return p()->spell.maelstrom_melee_gain->effectN( 1 ).resource( RESOURCE_MAELSTROM );
+  //}
 };
 
-struct enhancement_spell_t : public shaman_spell_t, enhancement_action_t<spell_t>
+
+struct enhancement_spell_t : public shaman_spell_t
 {
-private:
-    using enh_action = enhancement_action_t<spell_t>;
-    using shaman_action = shaman_action_t<spell_t>;
-    using spell_base = shaman_spell_base_t;
-    using ab = shaman_spell_t;
+  bool may_proc_maelstrom_weapon;
+  bool may_proc_stormbringer;
+  bool may_proc_ability_procs;
+  proc_t *proc_mw, *proc_sb;
 
-public:
-
-    enhancement_spell_t( const std::string& token, enhancement_shaman_t* p, const spell_data_t* s ) : 
-        shaman_action(token, p, s),
-        enh_action(token, p, s),
-        spell_base(token, p, s),
-        ab(token, p, s)
+    enhancement_spell_t( const std::string& token, enhancement_shaman_t* p, const spell_data_t* s,
+                       const std::string& options = std::string() )
+    : shaman_spell_t( token, p, s, options ),
+      may_proc_maelstrom_weapon( false ),  // Change to whitelisting
+      may_proc_stormbringer( p->spec.stormbringer->ok() ),
+      proc_mw( nullptr ),
+      proc_sb( nullptr )
     {
+      if ( base_t::data().affected_by( p->spec.enhancement_shaman->effectN( 1 ) ) )
+      {
+        base_t::base_multiplier *= 1.0 + p->spec.enhancement_shaman->effectN( 1 ).percent();
+      }
+
+      if ( base_t::data().affected_by( p->spec.restoration_shaman->effectN( 3 ) ) )
+      {
+        base_t::base_dd_multiplier *= 1.0 + p->spec.restoration_shaman->effectN( 3 ).percent();
+      }
+
       if ( data().affected_by( p->find_spell( 320137 )->effectN( 1 ) ) )
       {
-        affected_by_stormkeeper = true;
+        //affected_by_stormkeeper = true;
 
         affected_by_molten_weapon =
-            ab::data().affected_by_label( player->find_spell( 224125 )->effectN( 1 ).misc_value2() );
+         base_t::data().affected_by_label( p->find_spell( 224125 )->effectN( 1 ).misc_value2() );
       }
+    }
+
+    enhancement_shaman_t* p() override
+    {
+      return debug_cast<enhancement_shaman_t*>( base_t::player );
+    }
+
+    const enhancement_shaman_t* p() const override
+    {
+      return debug_cast<enhancement_shaman_t*>( base_t::player );
     }
 
     void init() override
     {
-      ab::init();
+      base_t::init();
+
+      // Setup Hasted CD for Enhancement
+      if ( base_t::data().affected_by( p()->spec.shaman->effectN( 2 ) ) )
+      {
+        base_t::cooldown->hasted = true;
+      }
+
+      // Setup Hasted GCD for Enhancement
+      if ( base_t::data().affected_by( p()->spec.shaman->effectN( 3 ) ) )
+      {
+        base_t::gcd_type = gcd_haste_type::ATTACK_HASTE;
+      }
+
+      if ( may_proc_stormbringer )
+      {
+        may_proc_stormbringer = base_t::weapon;
+      }
+    }
+
+    void init_finished() override
+    {
+      double procchance = p()->spec.stormbringer->proc_chance();
+      if ( may_proc_stormbringer )
+      {
+        proc_sb = player->get_proc( std::string( "Stormbringer: " ) + full_name() );
+      }
+
+      if ( may_proc_stormbringer )
+      {
+        proc_sb = player->get_proc( std::string( "Stormbringer: " ) + full_name() );
+      }
+
+      if ( may_proc_maelstrom_weapon )
+      {
+        proc_mw = player->get_proc( std::string( "Maelstrom Weapon: " ) + full_name() );
+      }
+
+      base_t::init_finished();
+    }
+
+    double action_multiplier() const override
+    {
+      double m = base_t::action_multiplier();
+
+      // Move to enhancement
+
+      if ( p()->specialization() == SHAMAN_ENHANCEMENT )
+      {
+        if ( ( dbc::is_school( this->school, SCHOOL_FIRE ) || dbc::is_school( this->school, SCHOOL_FROST ) ||
+               dbc::is_school( this->school, SCHOOL_NATURE ) ) &&
+             p()->mastery.enhanced_elements->ok() )
+        {
+          if ( base_t::data().affected_by( p()->mastery.enhanced_elements->effectN( 1 ) ) ||
+               base_t::data().affected_by( p()->mastery.enhanced_elements->effectN( 5 ) ) ||
+               enable_enh_mastery_scaling )
+          {
+            //...hopefully blizzard never makes direct and periodic scaling different from eachother in our mastery..
+            m *= 1.0 + p()->cache.mastery_value();
+          }
+        }
+      }
+
+      if ( affected_by_molten_weapon && p()->buff.molten_weapon->check() )
+      {
+        m *= std::pow( p()->buff.molten_weapon->check_value(), p()->buff.molten_weapon->check() );
+      }
+
+      return m;
+    }
+
+    double stormbringer_proc_chance() const
+    {
+      double base_chance = 0;
+
+      base_chance += p()->spec.stormbringer->proc_chance() +
+                     p()->cache.mastery() * p()->mastery.enhanced_elements->effectN( 3 ).mastery_value();
+
+      return base_chance;
+    }
+
+    void trigger_maelstrom_weapon( const action_state_t* source_state, double amount = 0 )
+    {
+      if ( !may_proc_maelstrom_weapon )
+      {
+        return;
+      }
+
+      /*if ( p()->buff.ghost_wolf->check() )
+      {
+        return;
+      }*/
+
+      // needs to roll stacks of MW weapon
+      // proc_mw->occur();
+
+      return;
     }
 
 };
+
+//struct enhancement_spell_t : public enhancement_spell_base_t<spell_t>
+//{
+//  enhancement_spell_t( const std::string& token, enhancement_shaman_t* p, const spell_data_t* s = spell_data_t::nil(),
+//                       const std::string& options = std::string() )
+//    : base_t(token, p, s)
+//  {
+//  }
+//};
 
 
 
@@ -573,4 +678,4 @@ public:
 
 
 
-}  // namespace shaman
+}
