@@ -462,18 +462,6 @@
     <ClCompile Include="..\engine\util\util.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\engine\class_modules\shaman\sc_shaman_elemental.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\engine\class_modules\shaman\sc_shaman_enhancement.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\engine\class_modules\shaman\sc_shaman_restoration.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\engine\class_modules\shaman\sc_shaman_class.hpp">
-      <Filter>Header Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\engine\util\xml.hpp">
@@ -972,9 +960,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\engine\util\vector_with_callback.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\engine\class_modules\shaman\sc_shaman.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
