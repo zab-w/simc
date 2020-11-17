@@ -56,7 +56,8 @@ struct cooldown_t
   void adjust_base_duration(); // Reacquire base cooldown duration from the action to adjust the cooldown time
   // Instantly recharge a cooldown. For multicharge cooldowns, charges_ specifies how many charges to reset.
   // If less than zero, all charges are reset.
-  void reset( bool require_reaction, int charges_ = 1 );
+  void reset( bool require_reaction, int charges_ );
+  void reset( bool require_reaction);
   void start( action_t* action, timespan_t override = timespan_t::min(), timespan_t delay = timespan_t::zero() );
   void start( timespan_t override = timespan_t::min(), timespan_t delay = timespan_t::zero() );
 
@@ -110,4 +111,5 @@ struct cooldown_t
 
 private:
   void adjust_remaining_duration( double delta ); // Modify the remaining duration of an ongoing cooldown.
+  void reset_core( bool require_reaction );
 };

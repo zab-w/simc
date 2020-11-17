@@ -356,7 +356,7 @@ double vulnerable_fight_length( player_t* actor )
 
   if ( it != actor->report_information.dynamic_buffs.end() )
   {
-    fight_length *= 1.0 - ( *it )->uptime_pct.pretty_mean() / 100.0;
+    fight_length *= 1.0 - ( *it )->uptime_pct.pretty_mean();
   }
 
   return fight_length;
@@ -802,7 +802,7 @@ void print_html_action_info( report::sc_html_stream& os, unsigned stats_mask, co
                    s.direct_results[ i ].avg_actual_amount.max(),
                    s.direct_results[ i ].fight_actual_amount.mean(),
                    s.direct_results[ i ].fight_total_amount.mean(),
-                   s.direct_results[ i ].overkill_pct.mean() );
+                   s.direct_results[ i ].overkill_pct.mean() * 100 );
       }
     }
 
@@ -866,7 +866,7 @@ void print_html_action_info( report::sc_html_stream& os, unsigned stats_mask, co
                    s.tick_results[ i ].avg_actual_amount.max(),
                    s.tick_results[ i ].fight_actual_amount.mean(),
                    s.tick_results[ i ].fight_total_amount.mean(),
-                   s.tick_results[ i ].overkill_pct.mean() );
+                   s.tick_results[ i ].overkill_pct.mean() * 100 );
       }
     }
 
@@ -3152,7 +3152,7 @@ void print_html_player_buff( report::sc_html_stream& os, const buff_t& b, int re
                b.start_intervals.pretty_mean(),
                b.trigger_intervals.pretty_mean(),
                b.duration_lengths.pretty_mean(),
-               b.uptime_pct.pretty_mean(),
+               b.uptime_pct.pretty_mean() * 100.0,
                b.benefit_pct.mean(),
                b.avg_overflow_count.mean(), b.avg_overflow_total.mean(),
                b.avg_expire.pretty_mean() );

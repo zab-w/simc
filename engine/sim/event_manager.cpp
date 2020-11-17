@@ -202,7 +202,8 @@ void event_manager_t::reschedule_event( event_t* e )
 
 bool event_manager_t::execute()
 {
-  while ( event_t* e = next_event() )
+  event_t* e;
+  while ( e = next_event() )
   {
     current_time = e->time;
 

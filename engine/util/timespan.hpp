@@ -181,7 +181,7 @@ namespace simc
 
     friend constexpr double operator/(timespan_t left, timespan_t right)
     {
-      return static_cast<double>(left.time) / right.time;
+      return static_cast<double>( (uint_least64_t)left.time ) / right.time;
     }
 
     friend constexpr timespan_t operator%(timespan_t left, timespan_t right)

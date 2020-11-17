@@ -274,7 +274,7 @@ void print_dynamic_buffs( std::ostream& os, const player_processed_report_inform
         b->start_intervals.mean(),
         b->trigger_intervals.mean(),
         b->duration_lengths.mean(),
-        b->uptime_pct.mean() );
+        b->uptime_pct.mean() * 100.0 );
 
     if ( b->benefit_pct.sum() > 0 && b->benefit_pct.mean() < 100 )
     {

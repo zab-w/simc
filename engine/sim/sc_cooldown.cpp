@@ -4,30 +4,32 @@
 // ==========================================================================
 
 #include "sc_cooldown.hpp"
+
 #include "action/sc_action.hpp"
 #include "player/sc_player.hpp"
 #include "sim/event.hpp"
 #include "sim/sc_expressions.hpp"
 #include "sim/sc_sim.hpp"
 
-namespace { // UNNAMED NAMESPACE
+namespace
+{  // UNNAMED NAMESPACE
 
 struct recharge_event_t : event_t
 {
   cooldown_t* cooldown_;
 
-  recharge_event_t( cooldown_t* cd ) :
-    event_t( cd->sim, cd->recharge_multiplier * cd->base_duration ),
-    cooldown_( cd )
-  { }
+  recharge_event_t( cooldown_t* cd ) : event_t( cd->sim, cd->recharge_multiplier * cd->base_duration ), cooldown_( cd )
+  {
+  }
 
-  recharge_event_t( cooldown_t* cd, timespan_t event_duration ) :
-    event_t( cd->sim, event_duration ),
-    cooldown_( cd )
-  { }
+  recharge_event_t( cooldown_t* cd, timespan_t event_duration ) : event_t( cd->sim, event_duration ), cooldown_( cd )
+  {
+  }
 
   const char* name() const override
-  { return "recharge_event"; }
+  {
+    return "recharge_event";
+  }
 
   void execute() override
   {
@@ -42,20 +44,19 @@ struct recharge_event_t : event_t
     else
     {
       cooldown_->recharge_event = nullptr;
-      cooldown_->last_charged = sim().current_time();
+      cooldown_->last_charged   = sim().current_time();
     }
 
     if ( sim().debug )
     {
       auto base_duration = cooldown_->base_duration.total_seconds();
-      auto dur = cooldown_->recharge_multiplier * base_duration;
-      sim().out_debug.printf( "%s recharge cooldown %s regenerated charge, current=%d, total=%d, next=%.3f, ready=%.3f, dur=%.3f, base_dur=%.3f, mul=%f",
-        cooldown_->player ? cooldown_->player->name() : "sim", cooldown_->name_str.c_str(), cooldown_->current_charge, cooldown_->charges,
-        cooldown_->recharge_event ? cooldown_->recharge_event->occurs().total_seconds() : 0,
-        cooldown_->ready.total_seconds(),
-        dur,
-        base_duration,
-        cooldown_->recharge_multiplier );
+      auto dur           = cooldown_->recharge_multiplier * base_duration;
+      sim().out_debug.printf(
+          "%s recharge cooldown %s regenerated charge, current=%d, total=%d, next=%.3f, ready=%.3f, dur=%.3f, "
+          "base_dur=%.3f, mul=%f",
+          cooldown_->player ? cooldown_->player->name() : "sim", cooldown_->name_str.c_str(), cooldown_->current_charge,
+          cooldown_->charges, cooldown_->recharge_event ? cooldown_->recharge_event->occurs().total_seconds() : 0,
+          cooldown_->ready.total_seconds(), dur, base_duration, cooldown_->recharge_multiplier );
     }
 
     cooldown_->update_ready_thresholds();
@@ -72,63 +73,66 @@ struct ready_trigger_event_t : public event_t
   player_t& player;
   cooldown_t* cooldown;
 
-  ready_trigger_event_t( player_t& p, cooldown_t* cd ) :
-    event_t( p, cd -> ready - p.sim -> current_time() ),
-    player(p),
-    cooldown( cd )
-  { }
+  ready_trigger_event_t( player_t& p, cooldown_t* cd )
+    : event_t( p, cd->ready - p.sim->current_time() ), player( p ), cooldown( cd )
+  {
+  }
 
   const char* name() const override
-  { return "ready_trigger_event"; }
+  {
+    return "ready_trigger_event";
+  }
 
   void execute() override
   {
-    cooldown -> ready_trigger_event = nullptr;
+    cooldown->ready_trigger_event = nullptr;
     player.trigger_ready();
   }
 };
 
-} // UNNAMED NAMESPACE
+}  // UNNAMED NAMESPACE
 
-cooldown_t::cooldown_t( util::string_view n, player_t& p ) :
-  sim( *p.sim ),
-  player( &p ),
-  name_str( n ),
-  duration( 0_ms ),
-  ready( ready_init() ),
-  reset_react( 0_ms ),
-  charges( 1 ),
-  recharge_event( nullptr ),
-  ready_trigger_event( nullptr ),
-  last_start( 0_ms ),
-  last_charged( 0_ms ),
-  hasted( false ),
-  action( nullptr ),
-  execute_types_mask( 0u ),
-  current_charge( 1 ),
-  recharge_multiplier( 1.0 ),
-  base_duration( 0_ms )
-{ }
+cooldown_t::cooldown_t( util::string_view n, player_t& p )
+  : sim( *p.sim ),
+    player( &p ),
+    name_str( n ),
+    duration( 0_ms ),
+    ready( ready_init() ),
+    reset_react( 0_ms ),
+    charges( 1 ),
+    recharge_event( nullptr ),
+    ready_trigger_event( nullptr ),
+    last_start( 0_ms ),
+    last_charged( 0_ms ),
+    hasted( false ),
+    action( nullptr ),
+    execute_types_mask( 0u ),
+    current_charge( 1 ),
+    recharge_multiplier( 1.0 ),
+    base_duration( 0_ms )
+{
+}
 
-cooldown_t::cooldown_t( util::string_view n, sim_t& s ) :
-  sim( s ),
-  player( nullptr ),
-  name_str( n ),
-  duration( 0_ms ),
-  ready( ready_init() ),
-  reset_react( 0_ms ),
-  charges( 1 ),
-  recharge_event( nullptr ),
-  ready_trigger_event( nullptr ),
-  last_start( 0_ms ),
-  last_charged( 0_ms ),
-  hasted( false ),
-  action( nullptr ),
-  execute_types_mask( 0u ),
-  current_charge( 1 ),
-  recharge_multiplier( 1.0 ),
-  base_duration( 0_ms )
-{ }
+cooldown_t::cooldown_t( util::string_view n, sim_t& s )
+  : sim( s ),
+    player( nullptr ),
+    name_str( n ),
+    duration( 0_ms ),
+    ready( ready_init() ),
+    reset_react( 0_ms ),
+    charges( 1 ),
+    recharge_event( nullptr ),
+    ready_trigger_event( nullptr ),
+    last_start( 0_ms ),
+    last_charged( 0_ms ),
+    hasted( false ),
+    action( nullptr ),
+    execute_types_mask( 0u ),
+    current_charge( 1 ),
+    recharge_multiplier( 1.0 ),
+    base_duration( 0_ms )
+{
+}
 
 /**
  * Adjust the recharge multiplier of a dynamic cooldown.
@@ -158,8 +162,8 @@ void cooldown_t::adjust_recharge_multiplier()
   if ( sim.debug )
   {
     sim.out_debug.printf( "%s dynamic cooldown %s adjusted: new_ready=%.3f old_ready=%.3f old_mul=%f new_mul=%f",
-        action -> player -> name(), name(), ready.total_seconds(), old_ready.total_seconds(),
-        old_multiplier, recharge_multiplier );
+                          action->player->name(), name(), ready.total_seconds(), old_ready.total_seconds(),
+                          old_multiplier, recharge_multiplier );
   }
 }
 
@@ -191,25 +195,25 @@ void cooldown_t::adjust_base_duration()
   if ( sim.debug )
   {
     sim.out_debug.printf( "%s dynamic cooldown %s adjusted: new_ready=%.3f old_ready=%.3f old_dur=%.3f new_dur=%.3f",
-      action->player->name(), name(), ready.total_seconds(), old_ready.total_seconds(),
-      old_duration.total_seconds(), base_duration.total_seconds() );
+                          action->player->name(), name(), ready.total_seconds(), old_ready.total_seconds(),
+                          old_duration.total_seconds(), base_duration.total_seconds() );
   }
 }
 
 void cooldown_t::adjust_remaining_duration( double delta )
 {
   assert( ongoing() && delta > 0.0 );
-  assert( charges > 0 && "Cooldown charges must be positive");
+  assert( charges > 0 && "Cooldown charges must be positive" );
 
   timespan_t new_remains, remains;
   if ( charges == 1 )
   {
-    remains = ready - sim.current_time();
+    remains     = ready - sim.current_time();
     new_remains = remains * delta;
   }
   else
   {
-    remains = recharge_event->remains();
+    remains     = recharge_event->remains();
     new_remains = remains * delta;
     // Shortened, reschedule the event
     if ( new_remains < remains )
@@ -263,9 +267,9 @@ void cooldown_t::adjust( timespan_t amount, bool require_reaction )
     }
 
     if ( sim.debug )
-      sim.out_debug.printf( "%s cooldown %s adjustment=%.3f, remains=%.3f, ready=%.3f",
-        player ? player->name() : "sim", name_str.c_str(), amount.total_seconds(),
-        ( ready - sim.current_time() ).total_seconds(), ready.total_seconds() );
+      sim.out_debug.printf( "%s cooldown %s adjustment=%.3f, remains=%.3f, ready=%.3f", player ? player->name() : "sim",
+                            name_str.c_str(), amount.total_seconds(), ( ready - sim.current_time() ).total_seconds(),
+                            ready.total_seconds() );
   }
   // Charge-based cooldown
   else if ( current_charge < charges )
@@ -287,8 +291,9 @@ void cooldown_t::adjust( timespan_t amount, bool require_reaction )
 
       if ( sim.debug )
         sim.out_debug.printf( "%s recharge cooldown %s adjustment=%.3f, remains=%.3f, occurs=%.3f, ready=%.3f",
-          player ? player->name() : "sim", name_str.c_str(), amount.total_seconds(), remains.total_seconds(),
-          recharge_event->occurs().total_seconds(), ready.total_seconds() );
+                              player ? player->name() : "sim", name_str.c_str(), amount.total_seconds(),
+                              remains.total_seconds(), recharge_event->occurs().total_seconds(),
+                              ready.total_seconds() );
     }
     // Recharged at least one charge
     else
@@ -312,12 +317,12 @@ void cooldown_t::adjust( timespan_t amount, bool require_reaction )
 
       if ( sim.debug )
       {
-        sim.out_debug.printf( "%s recharge cooldown %s regenerated %d charge(s), current=%d, total=%d, reminder=%.3f, next=%.3f, ready=%.3f",
-          player ? player -> name() : "sim", name_str.c_str(),
-          1 + extra_charges, current_charge, charges,
-          remains.total_seconds(),
-          recharge_event ? recharge_event -> occurs().total_seconds() : 0,
-          ready.total_seconds() );
+        sim.out_debug.printf(
+            "%s recharge cooldown %s regenerated %d charge(s), current=%d, total=%d, reminder=%.3f, next=%.3f, "
+            "ready=%.3f",
+            player ? player->name() : "sim", name_str.c_str(), 1 + extra_charges, current_charge, charges,
+            remains.total_seconds(), recharge_event ? recharge_event->occurs().total_seconds() : 0,
+            ready.total_seconds() );
       }
     }
   }
@@ -332,16 +337,16 @@ void cooldown_t::adjust( timespan_t amount, bool require_reaction )
 
 void cooldown_t::reset_init()
 {
-  ready = ready_init();
-  last_start = 0_ms;
+  ready        = ready_init();
+  last_start   = 0_ms;
   last_charged = 0_ms;
-  reset_react = 0_ms;
+  reset_react  = 0_ms;
 
-  current_charge = charges;
+  current_charge      = charges;
   recharge_multiplier = 1.0;
-  base_duration = duration;
+  base_duration       = duration;
 
-  recharge_event = nullptr;
+  recharge_event      = nullptr;
   ready_trigger_event = nullptr;
 }
 
@@ -352,11 +357,14 @@ void cooldown_t::reset( bool require_reaction, int charges_ )
   if ( charges_ < 0 )
     charges_ = charges;
 
-  bool was_down = down();
-  ready = ready_init();
-
   current_charge = std::min( charges, current_charge + charges_ );
+  this->reset_core( require_reaction );
+}
 
+void cooldown_t::reset_core( bool require_reaction )
+{
+  bool was_down = down();
+  ready         = ready_init();
   if ( require_reaction && player )
   {
     if ( was_down )
@@ -386,22 +394,41 @@ void cooldown_t::reset( bool require_reaction, int charges_ )
   }
 }
 
+void cooldown_t::reset( bool require_reaction )
+{
+  ++current_charge;
+  if ( charges < current_charge )
+  {
+    current_charge = charges;
+  }
+
+  this->reset_core( require_reaction );
+}
+
 timespan_t cooldown_t::remains() const
 {
   return std::max( timespan_t::zero(), ready - sim.current_time() );
 }
 
 timespan_t cooldown_t::current_charge_remains() const
-{ return recharge_event ? recharge_event -> remains() : timespan_t::zero(); }
+{
+  return recharge_event ? recharge_event->remains() : timespan_t::zero();
+}
 
 bool cooldown_t::up() const
-{ return ready <= sim.current_time(); }
+{
+  return ready <= sim.current_time();
+}
 
 bool cooldown_t::down() const
-{ return ready > sim.current_time(); }
+{
+  return ready > sim.current_time();
+}
 
 timespan_t cooldown_t::queue_delay() const
-{ return std::max( timespan_t::zero(), ready - sim.current_time() ); }
+{
+  return std::max( timespan_t::zero(), ready - sim.current_time() );
+}
 
 void cooldown_t::start( action_t* a, timespan_t _override, timespan_t delay )
 {
@@ -412,7 +439,7 @@ void cooldown_t::start( action_t* a, timespan_t _override, timespan_t delay )
   }
 
   reset_react = 0_ms;
-  action = a;
+  action      = a;
 
   // If a recharge is already in progress, we do not need to update the cooldown
   // state besides removing a charge and adjusting ready.
@@ -472,7 +499,7 @@ void cooldown_t::start( action_t* a, timespan_t _override, timespan_t delay )
   }
   else
   {
-    ready = sim.current_time() + event_duration;
+    ready        = sim.current_time() + event_duration;
     last_charged = ready;
   }
 
@@ -507,8 +534,7 @@ std::unique_ptr<expr_t> cooldown_t::create_expression( util::string_view name_st
     return make_mem_fn_expr( name_str, *this, &cooldown_t::remains );
   else if ( name_str == "base_duration" )
   {
-    return make_fn_expr( name_str, [ this ]
-    {
+    return make_fn_expr( name_str, [this] {
       if ( ongoing() )
         return base_duration.total_seconds();
       else if ( action )
@@ -519,17 +545,13 @@ std::unique_ptr<expr_t> cooldown_t::create_expression( util::string_view name_st
   }
   else if ( name_str == "duration" )
   {
-    return make_fn_expr( name_str, [ this ]
-    {
-      return cooldown_duration( this );
-    } );
+    return make_fn_expr( name_str, [this] { return cooldown_duration( this ); } );
   }
   else if ( name_str == "up" || name_str == "ready" )
     return make_mem_fn_expr( name_str, *this, &cooldown_t::up );
   else if ( name_str == "charges" )
   {
-    return make_fn_expr( name_str, [ this ]
-    {
+    return make_fn_expr( name_str, [this] {
       if ( charges <= 1 )
       {
         return up() ? 1.0 : 0.0;
@@ -544,8 +566,7 @@ std::unique_ptr<expr_t> cooldown_t::create_expression( util::string_view name_st
     return make_mem_fn_expr( name_str, *this, &cooldown_t::charges_fractional );
   else if ( name_str == "recharge_time" )
   {
-    return make_fn_expr( name_str, [ this ]
-    {
+    return make_fn_expr( name_str, [this] {
       if ( charges <= 1 )
         return remains().total_seconds();
       else if ( recharge_event )
@@ -556,8 +577,7 @@ std::unique_ptr<expr_t> cooldown_t::create_expression( util::string_view name_st
   }
   else if ( name_str == "full_recharge_time" )
   {
-    return make_fn_expr( name_str, [ this ]
-    {
+    return make_fn_expr( name_str, [this] {
       if ( charges <= 1 )
       {
         return remains().total_seconds();
@@ -626,7 +646,7 @@ double cooldown_t::charges_fractional() const
 
 bool cooldown_t::is_ready() const
 {
-  if (up())
+  if ( up() )
   {
     return true;
   }
@@ -636,7 +656,7 @@ bool cooldown_t::is_ready() const
   // basically only abilities, where the user must press a button to initiate the execution. Note
   // that off gcd abilities that bypass schedule_execute (i.e., action_t::use_off_gcd is set to
   // true) will for now not use the queueing system.
-  if (!action || !player)
+  if ( !action || !player )
   {
     return up();
   }

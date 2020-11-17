@@ -235,21 +235,23 @@ void stats_t::datacollection_end()
   double idr = 0;
   double itr = 0;
 
-  range::for_each( direct_results, [ &idr, &iaa, &ita ]( stats_results_t& r ) {
+  for ( auto& r : direct_results )
+  {
     idr += r.iteration_count;
     iaa += r.iteration_actual_amount;
     ita += r.iteration_total_amount;
 
     r.datacollection_end();
-  } );
+  }
 
-  range::for_each( tick_results, [ &itr, &iaa, &ita ]( stats_results_t& r ) {
+  for ( auto& r : tick_results )
+  {
     itr += r.iteration_count;
     iaa += r.iteration_actual_amount;
     ita += r.iteration_total_amount;
 
     r.datacollection_end();
-  } );
+  }
 
   actual_amount.add( iaa );
   total_amount.add( ita );
@@ -346,7 +348,7 @@ void stats_t::analyze()
 
   if ( compound_amount > 0 )
   {
-    overkill_pct = total_amount.mean() ? 100.0 * ( total_amount.mean() - actual_amount.mean() ) / total_amount.mean() : 0;
+    overkill_pct = total_amount.mean() ? ( total_amount.mean() - actual_amount.mean() ) / total_amount.mean() : 0;
     ape  = ( num_executes.mean() > 0 ) ? ( compound_amount / num_executes.mean() ) : 0;
 
     total_time = timespan_t::from_seconds( total_execute_time.mean() + total_tick_time.mean() );
@@ -433,7 +435,7 @@ void stats_t::stats_results_t::datacollection_end()
   count.add( iteration_count );
   fight_actual_amount.add( iteration_actual_amount );
   fight_total_amount.add(  iteration_total_amount );
-  overkill_pct.add( iteration_total_amount ? 100.0 * ( iteration_total_amount - iteration_actual_amount ) / iteration_total_amount : 0.0 );
+  overkill_pct.add( iteration_total_amount ? ( iteration_total_amount - iteration_actual_amount ) / iteration_total_amount : 0.0 );
 }
 
 void stats_t::stats_results_t::analyze( double num_results )

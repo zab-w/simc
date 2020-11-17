@@ -1449,7 +1449,7 @@ void buff_t::datacollection_end()
 
   timespan_t time = player ? player->iteration_fight_length : sim->current_time();
 
-  uptime_pct.add( time != timespan_t::zero() ? 100.0 * iteration_uptime_sum / time : 0 );
+  uptime_pct.add( time != timespan_t::zero() ? iteration_uptime_sum / time : 0 );
 
   for ( int i = 0; i <= simulation_max_stack; i++ )
     stack_uptime[ i ].datacollection_end( time );
@@ -2402,7 +2402,8 @@ void buff_t::reset()
 {
   event_t::cancel( delay );
   event_t::cancel( expiration_delay );
-  event_t::cancel( tick_event );
+  tick_event = nullptr;
+  //event_t::cancel( tick_event );
   cooldown->reset( false );
   expire();
   last_start        = timespan_t::min();
