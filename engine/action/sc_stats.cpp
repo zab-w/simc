@@ -235,7 +235,9 @@ void stats_t::datacollection_end()
   double idr = 0;
   double itr = 0;
 
-  range::for_each( direct_results, [ &idr, &iaa, &ita ]( stats_results_t& r ) {
+  range::for_each( direct_results, [&idr, &iaa, &ita]( stats_results_t& r ) {
+    if ( r.actual_amount.count() == 0 )
+      return;
     idr += r.iteration_count;
     iaa += r.iteration_actual_amount;
     ita += r.iteration_total_amount;
@@ -243,7 +245,9 @@ void stats_t::datacollection_end()
     r.datacollection_end();
   } );
 
-  range::for_each( tick_results, [ &itr, &iaa, &ita ]( stats_results_t& r ) {
+  range::for_each( tick_results, [&itr, &iaa, &ita]( stats_results_t& r ) {
+    if ( r.actual_amount.count() == 0 )
+      return;
     itr += r.iteration_count;
     iaa += r.iteration_actual_amount;
     ita += r.iteration_total_amount;
