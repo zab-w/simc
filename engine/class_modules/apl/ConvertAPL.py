@@ -6,7 +6,7 @@ import shutil
 # Add spec names here; these will be used to find the method in the apl file so should match your method name not necessarily tokenized spec name
 # The script will only attempt to generate the APL of specs listed here
 specList = ['blood', 'frost', 'unholy',  # Death Knight
-            'arcane', 'fire', # Mage (frost is ignored because of duplicate name)
+            'arcane', 'fire', 'elemental' # Mage (frost is ignored because of duplicate name)
            ]
 
 ignored_comments = [
