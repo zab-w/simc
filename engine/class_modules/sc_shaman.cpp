@@ -449,6 +449,7 @@ public:
 
     // Elemental, Restoration
     buff_t* lava_surge;
+    buff_t* fireheart_lava_surge_tracker;
 
     // Elemental, Enhancement
     buff_t* elemental_blast_crit;
@@ -864,7 +865,7 @@ public:
   void trigger_lightning_shield( const action_state_t* state );
   void trigger_hot_hand( const action_state_t* state );
   void trigger_vesper_totem( const action_state_t* state );
-  void trigger_lava_surge();
+  void trigger_lava_surge(bool fireheart);
 
   // Legendary
   void trigger_legacy_of_the_frost_witch( unsigned consumed_stacks );
@@ -5130,6 +5131,10 @@ struct lava_burst_t : public shaman_spell_t
     if ( !p()->lava_surge_during_lvb && p()->buff.lava_surge->check() )
     {
       p()->buff.lava_surge->expire();
+      if ( p()->buff.fireheart_lava_surge_tracker->check() )
+      {
+        p()->buff.fireheart_lava_surge_tracker->expire();
+      }
     }
 
     p()->lava_surge_during_lvb = false;
@@ -6051,7 +6056,7 @@ public:
 
     if ( rng().roll( proc_chance ) )
     {
-      p()->trigger_lava_surge();
+      p()->trigger_lava_surge(false);
     }
 
     if ( d->state->result == RESULT_CRIT && p()->legendary.skybreakers_fiery_demise->ok() )
@@ -9061,7 +9066,7 @@ void shaman_t::trigger_lightning_shield( const action_state_t* state )
   }
 }
 
-void shaman_t::trigger_lava_surge() {
+void shaman_t::trigger_lava_surge(bool fireheart) {
   if ( buff.lava_surge->check() )
   {
     proc.wasted_lava_surge->occur();
@@ -9078,6 +9083,10 @@ void shaman_t::trigger_lava_surge() {
   }
 
   buff.lava_surge->trigger();
+  if ( fireheart )
+  {
+    buff.fireheart_lava_surge_tracker->trigger();
+  }
 }
 
 // shaman_t::init_buffs =====================================================
@@ -9146,6 +9155,9 @@ void shaman_t::create_buffs()
   //
   // Elemental
   //
+  buff.fireheart_lava_surge_tracker = make_buff( this, "fireheart_lava_surge_tracker", find_spell( 77762 ) )
+                                          ->set_activated( false )
+                                          ->set_chance( 1.0 );  // Proc chance is handled externally
   buff.lava_surge = make_buff( this, "lava_surge", find_spell( 77762 ) )
                         ->set_activated( false )
                         ->set_chance( 1.0 );  // Proc chance is handled externally
@@ -9218,7 +9230,7 @@ void shaman_t::create_buffs()
                        // TODO: confirm if duration is affected by conduit and tier set 4pc bonus
                        ->set_duration( buff.fire_elemental->buff_duration() )
                        ->set_tick_callback( [ this ]( buff_t* /* b */, int, timespan_t ) {
-                         trigger_lava_surge();
+                         trigger_lava_surge(true);
                        } )
                        // TODO: confirm recasting elemental during uptime behaviour
                        ->set_refresh_behavior( buff_refresh_behavior::EXTEND );
